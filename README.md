@@ -15,7 +15,7 @@
 ---
 
 ## 🌟 Tentang Aplikasi
-**ConstrAA Report** adalah solusi digital modern yang dirancang khusus untuk para praktisi konstruksi (mandor, pengawas, hingga *project manager*). Aplikasi ini mendigitalkan proses pencatatan manual di lapangan, memastikan kelengkapan data harian seperti volume pekerjaan, alat berat, bahan, hingga kepatuhan standar K3 (Kesehatan dan Keselamatan Kerja) terekam dengan aman.
+**ConstrAA Report** adalah solusi digital modern yang dirancang khusus untuk para praktisi konstruksi (mandor, pengawas, hingga *project manager*). Aplikasi ini mendigitalkan proses pencatatan manual di lapangan, memastikan kelengkapan data harian seperti volume pekerjaan, alat berat, bahan, hingga kepatuhan standar K3 (Kesehatan dan Keselamatan Kerja) terekam dengan aman dalam satu *database* terpusat.
 
 ## 🚀 Fitur Utama
 
@@ -23,16 +23,16 @@
 - 📝 **Input Laporan Harian**: Form interaktif untuk mencatat jenis pekerjaan, volume bahan, dan jumlah pekerja.
 - 👷‍♂️ **Ceklis K3 Interaktif**: Kartu *Premium UI* yang menampilkan *counter* otomatis kelengkapan K3 (Helm, Sepatu, Harness, dll).
 - 🚜 **Manajemen Alat Dinamis**: Pilih alat berat dari *chip* bawaan atau tambahkan alat kustom secara langsung.
-- 📸 **Dokumentasi Visual**: Langsung ambil gambar lapangan (kamera/galeri) untuk bukti progres aktual.
+- 📸 **Dokumentasi Visual**: Pengambilan gambar langsung dari lapangan untuk bukti progres aktual.
 - 📊 **Dashboard Analitik**: Rangkuman total pekerja, tingkat kepatuhan K3, dan status pekerjaan.
-- 📁 **Rekapitulasi Cerdas**: Riwayat laporan harian yang tertata rapi dan bisa diklik untuk melihat detail spesifik laporan.
+- 📁 **Rekapitulasi Cerdas**: Riwayat laporan harian yang tertata rapi dan interaktif.
 - 📱 **Desain Responsif & Animasi**: Dibangun dengan *Glassmorphism UI* dan transisi *micro-animation* menggunakan `flutter_animate`.
 
 ## 🛠️ Teknologi & Arsitektur
 
-Aplikasi ini dibangun menggunakan arsitektur modern yang menjamin performa tinggi dan skalabilitas:
+Aplikasi ini dikembangkan dengan arsitektur modern untuk memastikan performa tinggi dan skalabilitas:
 
-| Komponen | Teknologi yang Digunakan |
+| Komponen | Teknologi |
 | :--- | :--- |
 | **Framework UI** | Flutter (Dart) |
 | **Backend & Auth** | Supabase (PostgreSQL) |
@@ -40,9 +40,9 @@ Aplikasi ini dibangun menggunakan arsitektur modern yang menjamin performa tingg
 | **Desain & Animasi** | Vanilla Flutter UI, `flutter_animate` |
 | **Media Handling** | `image_picker` |
 
-## 📦 Panduan Instalasi (Untuk Developer)
+## 📦 Menjalankan Proyek Secara Lokal
 
-Ikuti langkah-langkah berikut untuk menjalankan proyek ini di *local environment* Anda:
+Untuk menguji atau berkontribusi pada pengembangan aplikasi ini:
 
 1. **Clone Repositori**
    ```bash
@@ -51,19 +51,17 @@ Ikuti langkah-langkah berikut untuk menjalankan proyek ini di *local environment
    ```
 
 2. **Unduh Dependensi**
-   Pastikan Anda sudah menginstal Flutter SDK terbaru.
    ```bash
    flutter pub get
    ```
 
 3. **Jalankan Aplikasi**
-   Hubungkan *device* Android Anda atau gunakan Emulator.
    ```bash
    flutter run
    ```
 
 ## 📱 Tampilan Layar (Screenshots)
-*(Tambahkan URL gambar screenshot Anda di sini nanti)*
+*(Coming soon)*
 
 <p align="center">
   <i>"Membangun dengan data, memantau dengan presisi."</i>
