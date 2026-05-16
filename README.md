@@ -1,67 +1,70 @@
-# ConstrAA Report 🏗️
+<div align="center">
+  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
+  <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
+</div>
 
-Aplikasi mobile premium dan modern untuk manajemen dan pelaporan progres proyek konstruksi harian. Dibangun dengan menggunakan **Flutter** dan **Supabase**.
+<h1 align="center">🏗️ ConstrAA Report</h1>
 
-## Fitur Utama ✨
-* **Manajemen Progres Harian**: Catat pekerjaan, bahan, alat, dan volume dengan sangat mudah.
-* **Sistem K3 Terintegrasi**: Pengecekan standar Kesehatan dan Keselamatan Kerja (K3) dengan tampilan interaktif.
-* **Dokumentasi Foto**: Langsung ambil atau unggah foto progres dari galeri perangkat.
-* **Dashboard Analitik**: Pantau metrik proyek seperti Total Pekerja, Kepatuhan K3, dan jumlah laporan.
-* **Autentikasi Aman**: Login dan Registrasi terintegrasi dengan **Supabase Auth**.
-* **Database Persisten**: Data tersimpan dengan aman dan siap disinkronisasikan ke Cloud.
-* **UI/UX Elegan**: Dilengkapi dengan animasi halus menggunakan `flutter_animate` dan komponen desain premium.
+<p align="center">
+  <b>Aplikasi Mobile Premium untuk Manajemen Progres & K3 Proyek Konstruksi</b><br>
+  <i>Laporan harian di lapangan kini lebih cepat, rapi, dan terintegrasi.</i>
+</p>
 
-## Teknologi yang Digunakan 💻
-* **Framework:** Flutter (Dart)
-* **Backend as a Service:** Supabase (PostgreSQL & Auth)
-* **Local Storage:** SharedPreferences
-* **Animasi:** flutter_animate
-* **Media:** image_picker
+---
 
-## Panduan Instalasi 🚀
+## 🌟 Tentang Aplikasi
+**ConstrAA Report** adalah solusi digital modern yang dirancang khusus untuk para praktisi konstruksi (mandor, pengawas, hingga *project manager*). Aplikasi ini mendigitalkan proses pencatatan manual di lapangan, memastikan kelengkapan data harian seperti volume pekerjaan, alat berat, bahan, hingga kepatuhan standar K3 (Kesehatan dan Keselamatan Kerja) terekam dengan aman.
 
-1. **Clone repositori ini**
+## 🚀 Fitur Utama
+
+- 🔐 **Autentikasi Aman**: Sistem Login dan Pendaftaran peran-ganda terintegrasi dengan backend *Supabase*.
+- 📝 **Input Laporan Harian**: Form interaktif untuk mencatat jenis pekerjaan, volume bahan, dan jumlah pekerja.
+- 👷‍♂️ **Ceklis K3 Interaktif**: Kartu *Premium UI* yang menampilkan *counter* otomatis kelengkapan K3 (Helm, Sepatu, Harness, dll).
+- 🚜 **Manajemen Alat Dinamis**: Pilih alat berat dari *chip* bawaan atau tambahkan alat kustom secara langsung.
+- 📸 **Dokumentasi Visual**: Langsung ambil gambar lapangan (kamera/galeri) untuk bukti progres aktual.
+- 📊 **Dashboard Analitik**: Rangkuman total pekerja, tingkat kepatuhan K3, dan status pekerjaan.
+- 📁 **Rekapitulasi Cerdas**: Riwayat laporan harian yang tertata rapi dan bisa diklik untuk melihat detail spesifik laporan.
+- 📱 **Desain Responsif & Animasi**: Dibangun dengan *Glassmorphism UI* dan transisi *micro-animation* menggunakan `flutter_animate`.
+
+## 🛠️ Teknologi & Arsitektur
+
+Aplikasi ini dibangun menggunakan arsitektur modern yang menjamin performa tinggi dan skalabilitas:
+
+| Komponen | Teknologi yang Digunakan |
+| :--- | :--- |
+| **Framework UI** | Flutter (Dart) |
+| **Backend & Auth** | Supabase (PostgreSQL) |
+| **State & Storage** | Local Storage (SharedPreferences) & Caching |
+| **Desain & Animasi** | Vanilla Flutter UI, `flutter_animate` |
+| **Media Handling** | `image_picker` |
+
+## 📦 Panduan Instalasi (Untuk Developer)
+
+Ikuti langkah-langkah berikut untuk menjalankan proyek ini di *local environment* Anda:
+
+1. **Clone Repositori**
    ```bash
    git clone https://github.com/ardlikafi/ConstrAAReport.git
    cd ConstrAAReport
    ```
 
-2. **Install semua dependensi**
+2. **Unduh Dependensi**
+   Pastikan Anda sudah menginstal Flutter SDK terbaru.
    ```bash
    flutter pub get
    ```
 
-3. **Konfigurasi Supabase**
-   Buka file `lib/main.dart` dan pastikan `Supabase.initialize` sudah berisi URL dan Anon Key dari proyek Supabase Anda.
-
-4. **Jalankan Aplikasi**
+3. **Jalankan Aplikasi**
+   Hubungkan *device* Android Anda atau gunakan Emulator.
    ```bash
    flutter run
    ```
 
-## Konfigurasi Database Supabase 🗄️
-Untuk menyimpan laporan secara *online* di Supabase, jalankan kode SQL berikut pada **SQL Editor** di Dashboard Supabase Anda:
+## 📱 Tampilan Layar (Screenshots)
+*(Tambahkan URL gambar screenshot Anda di sini nanti)*
 
-```sql
-CREATE TABLE reports (
-  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  project_name TEXT NOT NULL,
-  date TEXT NOT NULL,
-  jenis_pekerjaan TEXT NOT NULL,
-  jenis_bahan TEXT NOT NULL,
-  volume TEXT NOT NULL,
-  satuan TEXT NOT NULL,
-  jenis_alat TEXT[] DEFAULT '{}',
-  jumlah_pekerja INT DEFAULT 1,
-  k3_count INT DEFAULT 0,
-  image_path TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
-);
-```
-
-## Build APK Rilis 📦
-Untuk membangun file APK yang siap dipasang ke perangkat Android:
-```bash
-flutter build apk --release
-```
-File APK akan berada di: `build/app/outputs/flutter-apk/app-release.apk`.
+<p align="center">
+  <i>"Membangun dengan data, memantau dengan presisi."</i>
+</p>
