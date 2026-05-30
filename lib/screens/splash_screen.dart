@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:constraa_report/screens/main_layout.dart';
 import 'package:constraa_report/screens/login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,10 +17,14 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
+
+      final session = Supabase.instance.client.auth.currentSession;
+      final Widget nextScreen = session != null ? const MainLayout() : const LoginScreen();
+
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
