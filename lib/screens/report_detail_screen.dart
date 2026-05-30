@@ -64,7 +64,10 @@ class ReportDetailScreen extends StatelessWidget {
                   const Divider(height: 24),
                   _buildDetailRow('Tanggal Laporan', report.date, Icons.calendar_month),
                   _buildDetailRow('Jenis Pekerjaan', report.jenisPekerjaan, Icons.engineering),
-                  _buildDetailRow('Bahan Digunakan', '${report.jenisBahan} (${report.volume} ${report.satuan})', Icons.inventory_2),
+                  _buildDetailRow('Bahan Digunakan', report.jenisBahan.contains('(') ? report.jenisBahan : '${report.jenisBahan} (${report.volume} ${report.satuan})', Icons.inventory_2),
+                  if (report.cuaca.isNotEmpty) _buildDetailRow('Cuaca', report.cuaca, Icons.wb_sunny_outlined),
+                  if (report.elemenBcb.isNotEmpty) _buildDetailRow('Elemen BCB', report.elemenBcb, Icons.history_edu_outlined),
+                  if (report.elemenNonBcb.isNotEmpty) _buildDetailRow('Elemen Non BCB', report.elemenNonBcb, Icons.account_balance_outlined),
                   _buildDetailRow('Jumlah Pekerja', '${report.jumlahPekerja} Orang', Icons.people),
                   _buildDetailRow('Kelengkapan K3', '${report.k3Count} Item Lengkap', Icons.health_and_safety),
                   
@@ -89,34 +92,100 @@ class ReportDetailScreen extends StatelessWidget {
               ),
             ).animate().fade().slideY(begin: 0.1),
             
-            if (report.imagePath != null) ...[
+            if (report.imagePaths.isNotEmpty) ...[
               const SizedBox(height: 24),
               const Text(
-                'Foto Progres',
+                'Foto Progres (Ketuk untuk Memperbesar)',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(report.imagePath!),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Text('Gambar tidak ditemukan atau dipindahkan', style: TextStyle(color: Colors.grey)),
-                      ),
-                    );
-                  },
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: report.imagePaths.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.2,
                 ),
+                itemBuilder: (context, index) {
+                  final path = report.imagePaths[index];
+                  return GestureDetector(
+                    onTap: () => _showFullImage(context, path),
+                    child: Hero(
+                      tag: path,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(path),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: const Center(
+                                child: Icon(Icons.broken_image_outlined, color: Colors.grey),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ).animate().fade(delay: 200.ms).scale(),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  // Beautiful Full-Screen Pinch-to-Zoom Image Viewer Dialog
+  void _showFullImage(BuildContext context, String path) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.9), // Elegant dark backdrop
+      builder: (context) {
+        return Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Hero(
+                  tag: path,
+                  child: Image.file(
+                    File(path),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white,
+                        size: 80,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: SafeArea(
+                child: Material(
+                  color: Colors.white.withOpacity(0.1),
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

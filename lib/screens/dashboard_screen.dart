@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
@@ -17,14 +18,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<ReportModel> _reports = [];
   bool _isLoading = true;
 
+  // Project Name state
+  String _projectName = 'Pembangunan Gedung A';
+
   // Form Controllers & State
-  String _selectedSatuan = 'Satuan';
   DateTime? _selectedDate;
   final TextEditingController _pekerjaanController = TextEditingController();
+  final List<String> _selectedPekerjaan = [];
+
   final TextEditingController _bahanController = TextEditingController();
   final TextEditingController _volumeController = TextEditingController(text: '0');
+  String _selectedSatuan = 'Satuan';
+  final List<Map<String, String>> _addedBahan = [];
+
   final TextEditingController _pekerjaController = TextEditingController(text: '1');
   
+  // New Controllers
+  final TextEditingController _cuacaController = TextEditingController();
+  final TextEditingController _elemenBcbController = TextEditingController();
+  final List<String> _selectedElemenBcb = [];
+  final TextEditingController _elemenNonBcbController = TextEditingController();
+  final List<String> _selectedElemenNonBcb = [];
+
   // K3 selection state
   int _k3Count = 0;
   final List<String> k3Items = [
@@ -41,7 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _alatController = TextEditingController();
 
   // Photo upload state
-  XFile? _selectedImage;
+  final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -66,6 +81,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _volumeController.dispose();
     _pekerjaController.dispose();
     _alatController.dispose();
+    _cuacaController.dispose();
+    _elemenBcbController.dispose();
+    _elemenNonBcbController.dispose();
     super.dispose();
   }
 
@@ -79,51 +97,146 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _selectedDate = null;
       _pekerjaanController.clear();
+      _selectedPekerjaan.clear();
       _bahanController.clear();
       _volumeController.text = '0';
       _pekerjaController.text = '1';
       _selectedSatuan = 'Satuan';
+      _addedBahan.clear();
       _k3Checked = List.generate(8, (_) => false);
       _updateK3Count();
       _selectedAlat.clear();
-      _selectedImage = null;
+      _selectedImages.clear();
+      _cuacaController.clear();
+      _elemenBcbController.clear();
+      _selectedElemenBcb.clear();
+      _elemenNonBcbController.clear();
+      _selectedElemenNonBcb.clear();
     });
   }
 
+  void _showEditProjectDialog() {
+    final controller = TextEditingController(text: _projectName);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Edit Nama Proyek', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextFormField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Masukkan nama proyek baru',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  setState(() {
+                    _projectName = controller.text.trim();
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _saveReport() async {
-    if (_selectedDate == null || _pekerjaanController.text.isEmpty) {
+    final jobInput = _pekerjaanController.text.trim();
+    if (_selectedDate == null || (_selectedPekerjaan.isEmpty && jobInput.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon isi Tanggal dan Jenis Pekerjaan!'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Mohon isi Tanggal dan setidaknya satu Jenis Pekerjaan!'), backgroundColor: Colors.red),
       );
       return;
     }
 
+    // Add any remaining text in the textfield to the list
+    final List<String> finalJobs = List.from(_selectedPekerjaan);
+    if (jobInput.isNotEmpty && !finalJobs.contains(jobInput)) {
+      finalJobs.add(jobInput);
+    }
+
+    final String jobsString = finalJobs.join(', ');
+    
+    // Format materials list
+    final List<String> formattedMaterials = _addedBahan.map((b) => "${b['nama']} (${b['volume']} ${b['satuan']})").toList();
+    final remainingBahan = _bahanController.text.trim();
+    if (remainingBahan.isNotEmpty) {
+      formattedMaterials.add("$remainingBahan (${_volumeController.text} $_selectedSatuan)");
+    }
+    final String materialsString = formattedMaterials.join(', ');
+
+    // Format Elemen BCB list
+    final List<String> finalBcb = List.from(_selectedElemenBcb);
+    final bcbInput = _elemenBcbController.text.trim();
+    if (bcbInput.isNotEmpty && !finalBcb.contains(bcbInput)) {
+      finalBcb.add(bcbInput);
+    }
+    final String bcbString = finalBcb.join(', ');
+
+    // Format Elemen Non BCB list
+    final List<String> finalNonBcb = List.from(_selectedElemenNonBcb);
+    final nonBcbInput = _elemenNonBcbController.text.trim();
+    if (nonBcbInput.isNotEmpty && !finalNonBcb.contains(nonBcbInput)) {
+      finalNonBcb.add(nonBcbInput);
+    }
+    final String nonBcbString = finalNonBcb.join(', ');
+
+    // Format images list
+    final String imagesString = _selectedImages.map((img) => img.path).join('|');
+
     final newReport = ReportModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      projectName: 'Pembangunan Gedung A',
+      projectName: _projectName,
       date: DateFormat('dd/MM/yyyy').format(_selectedDate!),
-      jenisPekerjaan: _pekerjaanController.text,
-      jenisBahan: _bahanController.text,
+      jenisPekerjaan: jobsString,
+      jenisBahan: materialsString,
       volume: _volumeController.text,
       satuan: _selectedSatuan,
       jenisAlat: List.from(_selectedAlat),
       jumlahPekerja: int.tryParse(_pekerjaController.text) ?? 1,
       k3Count: _k3Count,
-      imagePath: _selectedImage?.path,
+      imagePath: imagesString.isNotEmpty ? imagesString : null,
+      cuaca: _cuacaController.text.trim(),
+      elemenBcb: bcbString,
+      elemenNonBcb: nonBcbString,
     );
 
-    await ReportService.saveReport(newReport);
-    _resetForm();
-    await _loadReports();
+    try {
+      await ReportService.saveReport(newReport);
+      _resetForm();
+      await _loadReports();
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data progres berhasil disimpan!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data progres berhasil disimpan!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving report: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan progres: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -163,16 +276,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty) {
         setState(() {
-          _selectedImage = image;
+          _selectedImages.addAll(images);
         });
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      debugPrint('Error picking images: $e');
     }
   }
 
@@ -233,16 +346,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Nama Proyek:', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    SizedBox(height: 4),
-                    Text('Pembangunan Gedung A', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Nama Proyek:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text(_projectName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _showEditProjectDialog,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     minimumSize: Size.zero,
@@ -313,18 +428,217 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Jenis Pekerjaan
-                const Text('Jenis Pekerjaan', style: TextStyle(fontWeight: FontWeight.bold)),
+                // Cuaca
+                const Text('Cuaca', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _pekerjaanController,
-                  decoration: const InputDecoration(hintText: 'Cth: Pengecoran Lantai 2'),
+                  controller: _cuacaController,
+                  decoration: const InputDecoration(
+                    hintText: 'Cth: Cerah, Gerimis, Hujan Deras',
+                    prefixIcon: Icon(Icons.wb_sunny_outlined, color: Color(0xFF2F66A9)),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
-                // Jenis Bahan
-                const Text('Jenis Bahan', style: TextStyle(fontWeight: FontWeight.bold)),
+                // Elemen BCB (Multiple)
+                const Text('Elemen BCB (Benda Cagar Budaya - Bisa lebih dari 1)', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
+                if (_selectedElemenBcb.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedElemenBcb.map((elem) {
+                      return Chip(
+                        label: Text(elem, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                        backgroundColor: const Color(0xFF2F66A9),
+                        deleteIcon: const Icon(Icons.close, size: 14, color: Colors.white),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedElemenBcb.remove(elem);
+                          });
+                        },
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _elemenBcbController,
+                        decoration: const InputDecoration(
+                          hintText: 'Cth: Pembersihan dinding bata kuno',
+                          prefixIcon: Icon(Icons.history_edu_outlined, color: Color(0xFF2F66A9)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_elemenBcbController.text.trim().isNotEmpty) {
+                          setState(() {
+                            _selectedElemenBcb.add(_elemenBcbController.text.trim());
+                            _elemenBcbController.clear();
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F66A9),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      child: const Text('Tambah'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Elemen Non BCB (Multiple)
+                const Text('Elemen Non BCB (Bisa lebih dari 1)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (_selectedElemenNonBcb.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedElemenNonBcb.map((elem) {
+                      return Chip(
+                        label: Text(elem, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                        backgroundColor: const Color(0xFF2F66A9),
+                        deleteIcon: const Icon(Icons.close, size: 14, color: Colors.white),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedElemenNonBcb.remove(elem);
+                          });
+                        },
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _elemenNonBcbController,
+                        decoration: const InputDecoration(
+                          hintText: 'Cth: Pemasangan pipa air PVC',
+                          prefixIcon: Icon(Icons.account_balance_outlined, color: Color(0xFF2F66A9)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_elemenNonBcbController.text.trim().isNotEmpty) {
+                          setState(() {
+                            _selectedElemenNonBcb.add(_elemenNonBcbController.text.trim());
+                            _elemenNonBcbController.clear();
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F66A9),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      child: const Text('Tambah'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Jenis Pekerjaan (Multiple)
+                const Text('Jenis Pekerjaan (Bisa lebih dari 1)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (_selectedPekerjaan.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedPekerjaan.map((job) {
+                      return Chip(
+                        label: Text(job, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                        backgroundColor: const Color(0xFF2F66A9),
+                        deleteIcon: const Icon(Icons.close, size: 14, color: Colors.white),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedPekerjaan.remove(job);
+                          });
+                        },
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _pekerjaanController,
+                        decoration: const InputDecoration(hintText: 'Cth: Pengecoran Lantai 2'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_pekerjaanController.text.trim().isNotEmpty) {
+                          setState(() {
+                            _selectedPekerjaan.add(_pekerjaanController.text.trim());
+                            _pekerjaanController.clear();
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F66A9),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      child: const Text('Tambah'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Jenis Bahan (Multiple)
+                const Text('Jenis Bahan (Bisa lebih dari 1)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (_addedBahan.isNotEmpty) ...[
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _addedBahan.length,
+                    itemBuilder: (context, index) {
+                      final item = _addedBahan[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "${item['nama']} (${item['volume']} ${item['satuan']})",
+                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                              onPressed: () {
+                                setState(() {
+                                  _addedBahan.removeAt(index);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Row(
                   children: [
                     Expanded(
@@ -362,6 +676,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           },
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_bahanController.text.trim().isNotEmpty) {
+                          setState(() {
+                            _addedBahan.add({
+                              'nama': _bahanController.text.trim(),
+                              'volume': _volumeController.text.trim(),
+                              'satuan': _selectedSatuan,
+                            });
+                            _bahanController.clear();
+                            _volumeController.text = '0';
+                            _selectedSatuan = 'Satuan';
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F66A9),
+                        padding: const EdgeInsets.all(12),
+                        minimumSize: Size.zero,
+                      ),
+                      child: const Icon(Icons.add, color: Colors.white),
                     ),
                   ],
                 ),
@@ -535,43 +872,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Upload Foto Progres
-                const Text('Upload Foto Progres', style: TextStyle(fontWeight: FontWeight.bold)),
+                // Upload Foto Progres (Multiple)
+                const Text('Upload Foto Progres (Bisa lebih dari 1)', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
+                if (_selectedImages.isNotEmpty) ...[
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _selectedImages.length,
+                      itemBuilder: (context, index) {
+                        final file = _selectedImages[index];
+                        return Container(
+                          margin: const EdgeInsets.only(right: 12),
+                          width: 100,
+                          height: 100,
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(file.path),
+                                  fit: BoxFit.cover,
+                                  width: 100,
+                                  height: 100,
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedImages.removeAt(index);
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 GestureDetector(
-                  onTap: _pickImage,
+                  onTap: _pickImages,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     width: double.infinity,
-                    height: 120,
+                    height: 100,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _selectedImage != null ? const Color(0xFF2F66A9) : Colors.grey.shade300,
+                        color: Colors.grey.shade300,
                         style: BorderStyle.solid,
-                        width: _selectedImage != null ? 2 : 1,
                       ),
                     ),
-                    child: _selectedImage != null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle, color: Color(0xFF2F66A9), size: 32),
-                              const SizedBox(height: 8),
-                              const Text('Foto Berhasil Dipilih!', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2F66A9))),
-                              Text(_selectedImage!.name, style: const TextStyle(fontSize: 12, color: Colors.grey), overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey.shade400),
-                              const SizedBox(height: 8),
-                              const Text('Ketuk untuk Memilih Foto', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500)),
-                              const Text('Unggah foto progres lapangan', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            ],
-                          ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.camera_alt_outlined, size: 32, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        const Text('Ketuk untuk Tambah Foto', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                        const Text('Pilih satu atau beberapa foto dari galeri', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

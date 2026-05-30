@@ -1,34 +1,40 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/report_model.dart';
 
 class ReportService {
-  static const String _storageKey = 'constraa_reports';
+  static final _supabase = Supabase.instance.client;
 
-  // Save a report to local storage
+  // Save a report to Supabase, associated with the current user's ID
   static Future<void> saveReport(ReportModel report) async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Get existing reports
-    List<String> reportsJson = prefs.getStringList(_storageKey) ?? [];
-    
-    // Add new report
-    reportsJson.add(report.toJson());
-    
-    // Save back
-    await prefs.setStringList(_storageKey, reportsJson);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      final map = report.toMap();
+      if (userId != null) {
+        map['user_id'] = userId;
+      }
+      await _supabase.from('reports').insert(map);
+    } catch (e) {
+      throw Exception('Gagal menyimpan laporan: $e');
+    }
   }
 
-  // Get all reports from local storage
+  // Get only the reports belonging to the currently logged-in user
   static Future<List<ReportModel>> getReports() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> reportsJson = prefs.getStringList(_storageKey) ?? [];
-    
-    return reportsJson.map((jsonStr) => ReportModel.fromJson(jsonStr)).toList().reversed.toList();
-  }
-  
-  // Clear all reports (optional utility)
-  static Future<void> clearReports() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_storageKey);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        return [];
+      }
+      
+      final data = await _supabase
+          .from('reports')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+          
+      return data.map((item) => ReportModel.fromMap(item)).toList();
+    } catch (e) {
+      throw Exception('Gagal mengambil laporan: $e');
+    }
   }
 }

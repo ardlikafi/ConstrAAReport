@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:constraa_report/screens/splash_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:constraa_report/env.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await Supabase.initialize(
-    url: 'https://zgksegrybldwjaprpyoi.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpna3NlZ3J5Ymxkd2phcHJweW9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTI4NDAsImV4cCI6MjA5NDQ2ODg0MH0.xxKqXcyBMiJR9i83hxfxKEn7qzOUQt9mI9vFWV-fJ4U',
+    url: Env.supabaseUrl,
+    anonKey: Env.supabaseAnonKey,
   );
 
   runApp(const ConstrAAApp());
